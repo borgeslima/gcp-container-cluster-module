@@ -10,14 +10,14 @@ resource "google_container_cluster" "this" {
   project                  = var.project
   remove_default_node_pool = try(var.remove_default_node_pool, false)
   initial_node_count       = try(var.initial_node_count, 1)
-  
-  network                  = var.network
-  subnetwork               = var.subnetwork
 
-  enable_l4_ilb_subsetting = try(var.enable_l4_ilb_subsetting, false)
-  default_max_pods_per_node = try(var.default_max_pods_per_node, 3)
-  enable_kubernetes_alpha   = try(var.enable_kubernetes_alpha, false)
-  enable_legacy_abac =        try(var.enable_legacy_abac, false)
+  network    = var.network
+  subnetwork = var.subnetwork
+
+  enable_l4_ilb_subsetting    = try(var.enable_l4_ilb_subsetting, false)
+  default_max_pods_per_node   = try(var.default_max_pods_per_node, 3)
+  enable_kubernetes_alpha     = try(var.enable_kubernetes_alpha, false)
+  enable_legacy_abac          = try(var.enable_legacy_abac, false)
   enable_intranode_visibility = try(var.enable_intranode_visibility, false)
 
 
@@ -83,7 +83,7 @@ resource "google_container_cluster" "this" {
 
 
 resource "google_container_node_pool" "this" {
-    
+
   for_each = { for idx, pool in var.node_pools : idx => pool }
 
   name       = each.value.name
@@ -115,7 +115,7 @@ resource "google_container_node_pool" "this" {
       "https://www.googleapis.com/auth/cloud-platform",
     ]))
 
-    
+
 
 
     tags     = each.value.node_config.tags

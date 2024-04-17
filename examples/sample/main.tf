@@ -88,15 +88,6 @@ module "gke" {
     provider = "CALICO"
   }
 
-  private_cluster_config = {
-    enable_private_endpoint = false
-    enable_private_nodes    = false
-    master_ipv4_cidr_block  = ""
-    master_global_access_config = {
-      enabled = false
-    }
-  }
-
   ip_allocation_policy = {
     cluster_secondary_range_name  = tostring([for ips in module.network.subnetwork_secondary_ip_ranges : ips][0][0])
     services_secondary_range_name = tostring([for ips in module.network.subnetwork_secondary_ip_ranges : ips][0][1])
