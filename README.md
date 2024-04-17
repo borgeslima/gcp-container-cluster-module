@@ -57,7 +57,7 @@ module "network" {
 
 
 module "gke" {
-  source                      = "git::git@github.com:quarks-labs/gcp-container-cluster-module.git"
+  source                      = "git::https://github.com/quarks-labs/gcp-container-cluster-module.git"
   region                      = local.region
   name                        = local.name
   project                     = local.project
