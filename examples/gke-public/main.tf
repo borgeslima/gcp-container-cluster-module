@@ -3,9 +3,9 @@
 ################################################################################
 
 locals {
-  name    = "quark-labs"
+  name    = "zamp-pocs"
   region  = "us-east1"
-  project = "quarks-labs"
+  project = "zamp-pocs"
 }
 
 ################################################################################
@@ -14,31 +14,29 @@ locals {
 
 
 module "network" {
-  source = "git::https://github.com/quarks-labs/gcp-network-module.git"
+  source                  = "git::https://github.com/quarks-labs/gcp-network-module.git?ref=0.0.1"
   region                  = local.region
   name                    = local.name
   project                 = local.project
   auto_create_subnetworks = true
 
   subnetworks = [{
-      name                     = "default-01"
-      region                   = "us-east1"
-      ip_cidr_range            = "172.28.0.0/27"
-      private_ip_google_access = false
-      nat = {
-        nat_ip_allocate_option             = "MANUAL_ONLY"
-        source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
-      }
-      secondary_ip_ranges = [
-        {
-          range_name    = "primary"
-          ip_cidr_range = "172.1.16.0/20"
-        },
-        {
-          range_name    = "secondary"
-          ip_cidr_range = "172.1.32.0/20"
-        }
-      ]
+    name                     = "default-01"
+    region                   = "us-east1"
+    ip_cidr_range            = "172.28.0.0/27"
+    private_ip_google_access = false
+    nat = {
+      nat_ip_allocate_option             = "MANUAL_ONLY"
+      source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
+    }
+    secondary_ip_ranges = [{
+        range_name    = "primary"
+        ip_cidr_range = "172.1.16.0/20"
+      },
+      {
+        range_name    = "secondary"
+        ip_cidr_range = "172.1.32.0/20"
+      }]
     }
   ]
 }
@@ -49,7 +47,7 @@ module "network" {
 
 
 module "gke" {
-  source                      = "../.."
+  source                      = "git::https://github.com/quarks-labs/gcp-container-cluster-module.git"
   region                      = local.region
   name                        = local.name
   project                     = local.project
@@ -60,7 +58,7 @@ module "gke" {
   default_max_pods_per_node   = 110
   enable_intranode_visibility = false
   enable_l4_ilb_subsetting    = true
-
+  deletion_protection     = false
 
   master_auth = {
     client_certificate_config = {
@@ -88,6 +86,15 @@ module "gke" {
     provider = "CALICO"
   }
 
+  private_cluster_config = {
+    enable_private_endpoint = false
+    enable_private_nodes    = false
+    master_ipv4_cidr_block  = ""
+    master_global_access_config = {
+      enabled = false
+    }
+  }
+
   ip_allocation_policy = {
     cluster_secondary_range_name  = tostring([for ips in module.network.subnetwork_secondary_ip_ranges : ips][0][0])
     services_secondary_range_name = tostring([for ips in module.network.subnetwork_secondary_ip_ranges : ips][0][1])
@@ -95,7 +102,7 @@ module "gke" {
 
   maintenance_policy = {
     daily_maintenance_window = {
-        start_time = "03:00"
+      start_time = "03:00"
     }
   }
 
@@ -115,15 +122,16 @@ module "gke" {
       oauth_scopes = [
         "https://www.googleapis.com/auth/cloud-platform",
       ]
-      tags = []
+      tags     = []
       metadata = {}
-      labels = {}
+      labels   = {}
     }
     timeouts = {
       create = "30m"
       update = "30m"
     }
   }]
+  depends_on = [ module.network ]
 }
 
 data "google_client_config" "provider" {}

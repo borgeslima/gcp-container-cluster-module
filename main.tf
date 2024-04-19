@@ -5,22 +5,19 @@
 
 
 resource "google_container_cluster" "this" {
-  name                     = var.name
-  location                 = var.region
-  project                  = var.project
-  remove_default_node_pool = try(var.remove_default_node_pool, false)
-  initial_node_count       = try(var.initial_node_count, 1)
-
-  network    = var.network
-  subnetwork = var.subnetwork
-
+  name                        = var.name
+  project                     = var.project
+  location                    = try(var.region, "us-east1")
+  network                     = try(var.network, "default")
+  subnetwork                  = try(var.subnetwork, "default")
+  remove_default_node_pool    = try(var.remove_default_node_pool, false)
+  initial_node_count          = try(var.initial_node_count, 1)
   enable_l4_ilb_subsetting    = try(var.enable_l4_ilb_subsetting, false)
   default_max_pods_per_node   = try(var.default_max_pods_per_node, 3)
   enable_kubernetes_alpha     = try(var.enable_kubernetes_alpha, false)
   enable_legacy_abac          = try(var.enable_legacy_abac, false)
   enable_intranode_visibility = try(var.enable_intranode_visibility, false)
-
-
+  deletion_protection         = try(var.deletion_protection, false)
 
   master_auth {
     client_certificate_config {
@@ -28,13 +25,10 @@ resource "google_container_cluster" "this" {
     }
   }
 
-
   ip_allocation_policy {
     cluster_secondary_range_name  = try(var.ip_allocation_policy.cluster_secondary_range_name, "")
     services_secondary_range_name = try(var.ip_allocation_policy.services_secondary_range_name, "")
   }
-
-
 
   service_external_ips_config {
     enabled = try(var.service_external_ips_config.enabled, false)
@@ -88,21 +82,21 @@ resource "google_container_node_pool" "this" {
 
   name       = each.value.name
   cluster    = google_container_cluster.this.name
-  location   = var.region
-  node_count = each.value.node_count
+  location   = try(var.region, 1)
+  node_count = try(each.value.node_count, 1)
   project    = var.project
 
   autoscaling {
-    total_min_node_count = each.value.autoscaling.total_min_node_count
-    total_max_node_count = each.value.autoscaling.total_max_node_count
-    location_policy      = each.value.autoscaling.location_policy
+    total_min_node_count = try(each.value.autoscaling.total_min_node_count, 0)
+    total_max_node_count = try(each.value.autoscaling.total_max_node_count, 3)
+    location_policy      = try(each.value.autoscaling.location_policy, "BALANCED")
   }
 
   node_config {
-    machine_type = each.value.node_config.machine_type
-    disk_type    = each.value.node_config.disk_type
-    disk_size_gb = each.value.node_config.disk_size_gb
-    preemptible  = each.value.node_config.preemptible
+    machine_type = try(each.value.node_config.machine_type, "n1-standard-2")
+    disk_type    = try(each.value.node_config.disk_type, "30m")
+    disk_size_gb = try(each.value.node_config.disk_size_gb, 40)
+    preemptible  = try(each.value.node_config.preemptible, false)
     oauth_scopes = try(each.value.node_config.oauth_scopes, toset([
       "https://www.googleapis.com/auth/logging.write",
       "https://www.googleapis.com/auth/monitoring",
@@ -115,17 +109,14 @@ resource "google_container_node_pool" "this" {
       "https://www.googleapis.com/auth/cloud-platform",
     ]))
 
-
-
-
-    tags     = each.value.node_config.tags
-    metadata = each.value.node_config.metadata
-    labels   = each.value.node_config.labels
+    tags     = try(each.value.node_config.tags, {})
+    metadata = try(each.value.node_config.metadata, {})
+    labels   = try(each.value.node_config.labels, {})
   }
 
   timeouts {
-    create = each.value.timeouts.create
-    update = each.value.timeouts.update
+    create = try(each.value.timeouts.create, "30m")
+    update = try(each.value.timeouts.update, "30m")
   }
 }
 
