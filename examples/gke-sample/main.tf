@@ -5,7 +5,7 @@
 locals {
   name    = "quark-labs"
   region  = "us-east1"
-  project = "quarks-labs"
+  project = "quark-labs"
 }
 
 ################################################################################
