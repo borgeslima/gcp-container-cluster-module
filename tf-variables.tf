@@ -26,16 +26,19 @@ variable "subnetwork" {
 variable "remove_default_node_pool" {
   type        = bool
   description = "Remove default node Pool"
+  default     = false
 }
 
 variable "initial_node_count" {
   type        = number
   description = "Number of node default"
+  default     = 1
 }
 
 variable "enable_l4_ilb_subsetting" {
   type        = bool
   description = "Enable l4_ilb support"
+  default     = false
 }
 
 variable "service_external_ips_config" {
@@ -51,16 +54,19 @@ variable "service_external_ips_config" {
 variable "default_max_pods_per_node" {
   type        = number
   description = "Max of pods per node"
+  default     = 110
 }
 
 variable "enable_kubernetes_alpha" {
   type        = bool
   description = "Enabled Kubernetes Alpha"
+  default     = false
 }
 
 variable "enable_legacy_abac" {
   type        = bool
   description = "Enable Legacy abac"
+  default     = false
 }
 
 variable "addons_config" {
@@ -120,9 +126,16 @@ variable "private_cluster_config" {
   }
 }
 
+variable "deletion_protection" {
+  type        = bool
+  description = "Enable protection delete GKE"
+  default     = false
+}
+
 variable "enable_intranode_visibility" {
   type        = bool
   description = "Enable intranode visibility"
+  default     = false
 }
 
 variable "network_policy" {
@@ -152,8 +165,12 @@ variable "master_auth" {
     })
   })
   description = "Master auth configuration"
+  default = {
+    client_certificate_config = {
+      issue_client_certificate = true
+    }
+  }
 }
-
 
 variable "node_pools" {
   type = list(object({
